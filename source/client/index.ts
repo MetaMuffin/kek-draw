@@ -1,11 +1,12 @@
 import { Canvas } from "./canvas"
+import { Color } from "./color"
 import { setup_menu, update_menu } from "./menu"
 
 
 export var canvas: HTMLCanvasElement
 export var context: CanvasRenderingContext2D
 
-export var config: { background: string } = { background: "black" }
+export var config: { background: Color } = { background: Color.BLACK() }
 export const app_canvas = new Canvas()
 
 window.onload = () => {
@@ -33,7 +34,7 @@ window.onload = () => {
 }
 
 function redraw() {
-    context.fillStyle = config.background
+    context.fillStyle = config.background.value
     context.fillRect(0, 0, canvas.width, canvas.height)
 
     app_canvas.update()

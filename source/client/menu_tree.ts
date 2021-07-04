@@ -1,4 +1,5 @@
 import { app_canvas, config } from ".";
+import { Color } from "./color";
 import { MenuTree } from "./menu";
 
 
@@ -10,11 +11,12 @@ export const menu_tree: MenuTree = {
     ]
 }
 
-function color_helper(action: (color: string) => void): MenuTree[] {
-    const colors: [string, string][] = [["Green", "#00ff00"], ["Yellow", "#ffff00"], ["Red", "#ff0000"], ["Magenta", "#ff00ff"], ["Blue", "#0000ff"], ["Cyan", "#00ffff"]]
-    return colors.map(([label, col]) => ({
-        label, action: () => action(col), tint: col
-    }))
+function color_helper(action: (color: Color) => void): MenuTree[] {
+    const colors: string[] = ["Red", "Yellow", "Green", "Cyan", "Blue", "Magenta"]
+    return colors.map((label, i) => {
+        const col = new Color(i / colors.length)
+        return { label, action: () => action(col), tint: col }
+    })
 }
 
 const m_layer_config = (): MenuTree[] => [
@@ -45,7 +47,7 @@ const m_global_config = (): MenuTree[] => [
             },
             {
                 label: "Clear color",
-                action: () => config.background = "black"
+                action: () => config.background = Color.BLACK()
             }
         ]
     },

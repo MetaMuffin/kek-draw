@@ -1,4 +1,5 @@
 import { context } from "."
+import { Color } from "./color"
 import { get_mouse_pos } from "./helper"
 
 
@@ -40,14 +41,14 @@ export class Canvas {
 
 export class CanvasLayer {
     strokes: Stroke[] = []
-    fill_color?: string
-    stroke_color?: string = "white"
+    fill_color?: Color
+    stroke_color?: Color = Color.WHITE()
     line_width: number = 3
 
     draw() {
         context.lineWidth = this.line_width
-        if (this.fill_color) context.fillStyle = this.fill_color
-        if (this.stroke_color) context.strokeStyle = this.stroke_color
+        if (this.fill_color) context.fillStyle = this.fill_color.value
+        if (this.stroke_color) context.strokeStyle = this.stroke_color.value
         const do_fill = this.fill_color != undefined
         const do_stroke = this.stroke_color != undefined
         for (const s of this.strokes) {

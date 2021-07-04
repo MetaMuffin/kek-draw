@@ -1,4 +1,5 @@
 import { canvas, context } from "."
+import { Color } from "./color"
 import { dist } from "./helper"
 import { menu_tree } from "./menu_tree"
 
@@ -17,7 +18,7 @@ export interface MenuTree {
     label: string
     action?: () => void
     subtree?: () => MenuTree[]
-    tint?: string
+    tint?: Color
 }
 
 
