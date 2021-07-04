@@ -16,7 +16,8 @@ export interface MenuState {
 export interface MenuTree {
     label: string
     action?: () => void
-    subtree?: MenuTree[] //{ [key: string]: MenuTree }
+    subtree?: () => MenuTree[]
+    tint?: string
 }
 
 
@@ -30,11 +31,16 @@ export function setup_menu() {
         mouse.x = ev.clientX - rect.left
         mouse.y = ev.clientY - rect.top
     })
+    document.addEventListener("contextmenu", (ev) => ev.preventDefault())
     document.addEventListener("mousedown", (ev) => {
+        if (ev.button != 2) return
+        ev.preventDefault()
         mouse.pressed = true
         mstate = { current_menu: menu_tree, first_sel_start: { x: mouse.x, y: mouse.y }, last_sel_start: { x: mouse.x, y: mouse.y } }
     })
     document.addEventListener("mouseup", (ev) => {
+        if (ev.button != 2) return
+        ev.preventDefault()
         mouse.pressed = false
         mstate = undefined
     })
@@ -43,10 +49,11 @@ export function setup_menu() {
 export function update_menu() {
     if (mstate) {
         if (mstate.current_menu.subtree) {
-            const seg_size = Math.PI * 2 / mstate.current_menu.subtree.length
-            for (let i = 0; i < mstate.current_menu.subtree.length; i++) {
-                const item = mstate.current_menu.subtree[i];
-                var r = i / mstate.current_menu.subtree.length * Math.PI * 2
+            const st = mstate.current_menu.subtree()
+            const seg_size = Math.PI * 2 / st.length
+            for (let i = 0; i < st.length; i++) {
+                const item = st[i];
+                var r = i / st.length * Math.PI * 2
                 const x = Math.sin(r) * SELECT_RADIUS + mstate.last_sel_start.x
                 const y = Math.cos(r) * SELECT_RADIUS + mstate.last_sel_start.y
                 context.fillStyle = "white"
@@ -68,10 +75,10 @@ export function update_menu() {
             let a = Math.atan2(mouse.x - mstate.last_sel_start.x, mouse.y - mstate.last_sel_start.y)
             if (a < 0) a += Math.PI * 2
             if (d > SELECT_RADIUS) {
-                const item_index = Math.floor(a * mstate.current_menu.subtree.length / Math.PI / 2 + 0.5) % mstate.current_menu.subtree.length
+                const item_index = Math.floor(a * st.length / Math.PI / 2 + 0.5) % st.length
                 mstate.last_sel_start.x = mouse.x
                 mstate.last_sel_start.y = mouse.y
-                const selection = mstate.current_menu.subtree[item_index]
+                const selection = st[item_index]
                 if (selection.action) selection.action()
                 if (selection.subtree) mstate.current_menu = selection
                 else mstate = undefined

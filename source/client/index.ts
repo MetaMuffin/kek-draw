@@ -1,9 +1,12 @@
+import { Canvas } from "./canvas"
+import { setup_menu, update_menu } from "./menu"
 
 
 export var canvas: HTMLCanvasElement
 export var context: CanvasRenderingContext2D
 
 export var config: { background: string } = { background: "black" }
+export const app_canvas = new Canvas()
 
 window.onload = () => {
     canvas = document.createElement("canvas")
@@ -23,7 +26,8 @@ window.onload = () => {
         canvas.height = window.innerHeight
     }
     window.addEventListener("resize", () => resize())
-
+    app_canvas.setup()
+    setup_menu()
     resize()
     redraw()
 }
@@ -31,7 +35,10 @@ window.onload = () => {
 function redraw() {
     context.fillStyle = config.background
     context.fillRect(0, 0, canvas.width, canvas.height)
-    
+
+    app_canvas.update()
+    update_menu()
+
     requestAnimationFrame(redraw)
 }
 
