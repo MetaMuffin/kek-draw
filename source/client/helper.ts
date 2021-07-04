@@ -12,3 +12,12 @@ export function get_mouse_pos(ev: MouseEvent): { x: number, y: number } {
         y: ev.clientY - rect.top
     }
 }
+
+
+
+export function make_void(fn: () => any): () => void {
+    return () => {
+        fn()
+        return
+    }
+}
