@@ -52,25 +52,34 @@ export function update_menu() {
         if (mstate.current_menu.subtree) {
             const st = mstate.current_menu.subtree()
             const seg_size = Math.PI * 2 / st.length
-            for (let i = 0; i < st.length; i++) {
-                const item = st[i];
-                var r = i / st.length * Math.PI * 2
-                const x = Math.sin(r) * SELECT_RADIUS + mstate.last_sel_start.x
-                const y = Math.cos(r) * SELECT_RADIUS + mstate.last_sel_start.y
-                context.fillStyle = "white"
-                context.font = "32px sans-serif"
-                context.textAlign = "center"
-                context.textBaseline = "middle"
-                context.fillText(item.label, x, y)
+            for (let pass = 0; pass < 2; pass++) {
+                for (let i = 0; i < st.length; i++) {
+                    const item = st[i];
+                    var r = i / st.length * Math.PI * 2
+                    const x = Math.sin(r) * SELECT_RADIUS + mstate.last_sel_start.x
+                    const y = Math.cos(r) * SELECT_RADIUS + mstate.last_sel_start.y
 
-                context.fillStyle = "rgba(255,255,255,0.2)"
-                context.strokeStyle = "black"
-                context.beginPath()
-                context.arc(mstate.last_sel_start.x, mstate.last_sel_start.y, SELECT_RADIUS, r - seg_size / 2, r + seg_size / 2)
-                context.arc(mstate.last_sel_start.x, mstate.last_sel_start.y, SELECT_RADIUS + SELECT_RING_THICKNESS, r + seg_size / 2, r - seg_size / 2, true)
-                context.fill()
-                context.stroke()
+                    if (pass == 1) {
+                        context.fillStyle = "white"
+                        context.font = "32px sans-serif"
+                        context.textAlign = "center"
+                        context.textBaseline = "middle"
+                        context.fillText(item.label, x, y)
+                    }
+                    if (pass == 0) {
+                        if (item.tint) context.fillStyle = item.tint.with_alpha(0.3).value
+                        else context.fillStyle = "rgba(255,255,255,0.2)"
 
+                        context.strokeStyle = "black"
+                        context.beginPath()
+                        const off = 0
+                        context.arc(mstate.last_sel_start.x, mstate.last_sel_start.y, SELECT_RADIUS, -r - seg_size / 2 + off, -r + seg_size / 2 + off)
+                        context.arc(mstate.last_sel_start.x, mstate.last_sel_start.y, SELECT_RADIUS + SELECT_RING_THICKNESS, -r + seg_size / 2 + off, -r - seg_size / 2 + off, true)
+                        context.fill()
+                        context.stroke()
+                    }
+
+                }
             }
             let d = dist(mouse.x, mouse.y, mstate.last_sel_start.x, mstate.last_sel_start.y)
             let a = Math.atan2(mouse.x - mstate.last_sel_start.x, mouse.y - mstate.last_sel_start.y)

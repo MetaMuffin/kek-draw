@@ -31,6 +31,8 @@ export class Color {
         return this.string_cache = `hsl(${this._hue * 255},${this._saturation * 100}%,${this._lightness * 100}%,${this._alpha})`
     }
 
+    with_alpha(value: number) { return new Color(this.hue, this.saturation, this.lightness, this.alpha * value) }
+
     static WHITE() { return new Color(0, 0, 1) }
     static BLACK() { return new Color(0, 0, 0) }
     static TRANSPARENT() { return new Color(0, 0, 0, 0) }
