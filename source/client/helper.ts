@@ -15,7 +15,14 @@ export function get_mouse_pos(ev: MouseEvent): { x: number, y: number } {
 
 
 
-export function make_void(fn: () => any): () => void {
+export function make_void_arg<T>(fn: (arg: T) => any): (arg: T) => void {
+    return (arg) => {
+        fn(arg)
+        return
+    }
+}
+
+export function make_void<T>(fn: () => any): () => void {
     return () => {
         fn()
         return

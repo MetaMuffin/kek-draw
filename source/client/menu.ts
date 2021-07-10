@@ -8,24 +8,30 @@ import { menu_root } from "./menu_tree"
 const SELECT_RADIUS = 100
 const SELECT_RING_THICKNESS = 30
 
-export interface MenuState {
+export interface MouseMenuState {
     current_menu: MenuTree[]
     last_sel_start: { x: number, y: number }
     first_sel_start: { x: number, y: number }
 }
+export interface KeyboardMenuState {
+    current_menu: MenuTree[]
+}
 
 export interface MenuTree {
     label: string
-    select?: () => undefined | void | MenuTree[]
+    select?: () => undefined | void | MenuTree[],
+    keybind?: string
     tint?: Color
 }
 
-
-
-var mstate: MenuState | undefined
+var mstate_mouse: MouseMenuState | undefined
+var mstate_keyboard: KeyboardMenuState | undefined
 var mouse: { x: number, y: number, pressed: boolean } = { x: 0, y: 0, pressed: false }
 
+function default_keyboard_menu_state(): KeyboardMenuState { return { current_menu: menu_root() } }
+
 export function setup_menu() {
+    mstate_keyboard = default_keyboard_menu_state()
     document.addEventListener("mousemove", (ev) => {
         var rect = canvas.getBoundingClientRect();
         mouse.x = ev.clientX - rect.left
@@ -36,26 +42,57 @@ export function setup_menu() {
         if (ev.button != 2) return
         ev.preventDefault()
         mouse.pressed = true
-        mstate = { current_menu: menu_root(), first_sel_start: { x: mouse.x, y: mouse.y }, last_sel_start: { x: mouse.x, y: mouse.y } }
+        mstate_mouse = { current_menu: menu_root(), first_sel_start: { x: mouse.x, y: mouse.y }, last_sel_start: { x: mouse.x, y: mouse.y } }
     })
     document.addEventListener("mouseup", (ev) => {
         if (ev.button != 2) return
         ev.preventDefault()
         mouse.pressed = false
-        mstate = undefined
+        mstate_mouse = undefined
+    })
+    document.addEventListener("keydown", (ev) => {
+        if (!mstate_keyboard) return
+        if (ev.code == "Escape") {
+            ev.preventDefault()
+            mstate_keyboard = default_keyboard_menu_state()
+        }
+        for (const o of mstate_keyboard.current_menu) {
+            if (o.keybind == ev.key) {
+                ev.preventDefault()
+                if (!o.select) return mstate_keyboard = default_keyboard_menu_state()
+                const submenu = o.select()
+                if (submenu) mstate_keyboard.current_menu = submenu
+                else mstate_keyboard = default_keyboard_menu_state()
+            }
+        }
     })
 }
 
-export function update_menu() {
-    if (mstate) {
-        const st = mstate.current_menu
+export function draw_keyboard_menu() {
+    if (!mstate_keyboard) return
+    context.font = "24px sans-serif"
+    context.textAlign = "left"
+    context.textBaseline = "bottom"
+    var base = canvas.height - 24 * mstate_keyboard.current_menu.length
+    for (const o of mstate_keyboard.current_menu) {
+        context.fillStyle = "#ffc72b"
+        if (o.keybind) context.fillText(o.keybind, 0, base)
+        context.fillStyle = "white"
+        context.fillText(o.label, 64, base)
+        base += 24
+    }
+}
+
+export function update_mouse_menu() {
+    if (mstate_mouse) {
+        const st = mstate_mouse.current_menu
         const seg_size = Math.PI * 2 / st.length
         for (let pass = 0; pass < 2; pass++) {
             for (let i = 0; i < st.length; i++) {
                 const item = st[i];
                 var r = i / st.length * Math.PI * 2
-                const x = Math.sin(r) * SELECT_RADIUS + mstate.last_sel_start.x
-                const y = Math.cos(r) * SELECT_RADIUS + mstate.last_sel_start.y
+                const x = Math.sin(r) * SELECT_RADIUS + mstate_mouse.last_sel_start.x
+                const y = Math.cos(r) * SELECT_RADIUS + mstate_mouse.last_sel_start.y
 
                 if (pass == 1) {
                     context.fillStyle = "white"
@@ -71,28 +108,28 @@ export function update_menu() {
                     context.strokeStyle = "black"
                     context.beginPath()
                     const off = 0
-                    context.arc(mstate.last_sel_start.x, mstate.last_sel_start.y, SELECT_RADIUS, -r - seg_size / 2 + off, -r + seg_size / 2 + off)
-                    context.arc(mstate.last_sel_start.x, mstate.last_sel_start.y, SELECT_RADIUS + SELECT_RING_THICKNESS, -r + seg_size / 2 + off, -r - seg_size / 2 + off, true)
+                    context.arc(mstate_mouse.last_sel_start.x, mstate_mouse.last_sel_start.y, SELECT_RADIUS, -r - seg_size / 2 + off, -r + seg_size / 2 + off)
+                    context.arc(mstate_mouse.last_sel_start.x, mstate_mouse.last_sel_start.y, SELECT_RADIUS + SELECT_RING_THICKNESS, -r + seg_size / 2 + off, -r - seg_size / 2 + off, true)
                     context.fill()
                     context.stroke()
                 }
 
             }
         }
-        let d = dist(mouse.x, mouse.y, mstate.last_sel_start.x, mstate.last_sel_start.y)
-        let a = Math.atan2(mouse.x - mstate.last_sel_start.x, mouse.y - mstate.last_sel_start.y)
+        let d = dist(mouse.x, mouse.y, mstate_mouse.last_sel_start.x, mstate_mouse.last_sel_start.y)
+        let a = Math.atan2(mouse.x - mstate_mouse.last_sel_start.x, mouse.y - mstate_mouse.last_sel_start.y)
         if (a < 0) a += Math.PI * 2
         if (d > SELECT_RADIUS) {
             const item_index = Math.floor(a * st.length / Math.PI / 2 + 0.5) % st.length
-            mstate.last_sel_start.x = mouse.x
-            mstate.last_sel_start.y = mouse.y
+            mstate_mouse.last_sel_start.x = mouse.x
+            mstate_mouse.last_sel_start.y = mouse.y
             const selection = st[item_index]
             if (selection.select) {
                 const subtree = selection.select()
-                if (!subtree) return mstate = undefined
-                mstate.current_menu = subtree
+                if (!subtree) return mstate_mouse = undefined
+                mstate_mouse.current_menu = subtree
             }
-            else mstate = undefined
+            else mstate_mouse = undefined
         }
     }
 }

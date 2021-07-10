@@ -1,6 +1,6 @@
 import { Canvas } from "./canvas"
 import { Color } from "./color"
-import { setup_menu, update_menu } from "./menu"
+import { draw_keyboard_menu, setup_menu, update_mouse_menu } from "./menu"
 
 
 export var canvas: HTMLCanvasElement
@@ -38,7 +38,8 @@ function redraw() {
     context.fillRect(0, 0, canvas.width, canvas.height)
 
     app_canvas.update()
-    update_menu()
+    update_mouse_menu()
+    draw_keyboard_menu()
 
     requestAnimationFrame(redraw)
 }

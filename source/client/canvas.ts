@@ -57,10 +57,13 @@ export class CanvasLayer {
     stroke_color?: Color = Color.WHITE()
     line_width: number = 3
     canvas: Canvas
+    priority: number = 0
+    hidden: boolean = false
 
     constructor(canvas: Canvas) { this.canvas = canvas }
 
     draw() {
+        if (this.hidden) return
         context.save()
         context.transform(...this.canvas.transform.to_array())
         context.lineWidth = this.line_width
