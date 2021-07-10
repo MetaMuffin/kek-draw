@@ -1,5 +1,6 @@
-import { canvas, context } from "."
+import { canvas, context, shift } from "."
 import { Color } from "./color"
+import { K_MENU } from "./config"
 import { dist } from "./helper"
 import { menu_root } from "./menu_tree"
 
@@ -40,13 +41,13 @@ export function setup_menu() {
     })
     document.addEventListener("contextmenu", (ev) => ev.preventDefault())
     document.addEventListener("mousedown", (ev) => {
-        if (ev.button != 2) return
+        if (ev.button != K_MENU[0] || shift != K_MENU[1]) return
         ev.preventDefault()
         mouse.pressed = true
         mstate_mouse = { current_menu: menu_root(), first_sel_start: { x: mouse.x, y: mouse.y }, last_sel_start: { x: mouse.x, y: mouse.y } }
     })
     document.addEventListener("mouseup", (ev) => {
-        if (ev.button != 2) return
+        if (ev.button != K_MENU[0] || shift != K_MENU[1]) return
         ev.preventDefault()
         mouse.pressed = false
         mstate_mouse = undefined

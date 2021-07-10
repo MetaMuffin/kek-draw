@@ -1,6 +1,7 @@
 import { app_canvas, config } from ".";
 import { CanvasLayer } from "./canvas";
 import { Color } from "./color";
+import { file_export, file_import } from "./export";
 import { make_void, make_void_arg } from "./helper";
 import { MenuTree } from "./menu";
 
@@ -10,7 +11,14 @@ export function menu_root(): MenuTree[] {
         { label: "config", keybind: "c", select: m_global_config },
         { label: "this layer", keybind: "l", select: m_this_layer_config },
         { label: "layers", keybind: "w", select: m_layers_config },
-        { label: "tool", keybind: "t" }
+        { label: "tool", keybind: "t" },
+        {
+            label: "extra", keybind: "e", select: (): MenuTree[] => [
+                { label: "rm last stroke of this layer", keybind: "u", select: make_void(() => app_canvas.active_layer.strokes.pop()) },
+                { label: "export", keybind: "e", select: () => file_export() },
+                { label: "import", keybind: "i", select: () => file_import() },
+            ]
+        }
     ]
 }
 

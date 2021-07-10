@@ -3,6 +3,8 @@ import { Color } from "./color"
 import { draw_keyboard_menu, setup_menu, update_mouse_menu } from "./menu"
 
 
+export var shift = false
+
 export var canvas: HTMLCanvasElement
 export var context: CanvasRenderingContext2D
 
@@ -21,7 +23,13 @@ window.onload = () => {
     canvas.style.width = "100vw"
     canvas.style.height = "100vh"
 
-   
+    document.addEventListener("keydown", ev => {
+        if (ev.code == "ShiftLeft") shift = true
+    })
+    document.addEventListener("keyup", ev => {
+        if (ev.code == "ShiftLeft") shift = false
+    })
+
     function resize() {
         canvas.width = window.innerWidth
         canvas.height = window.innerHeight

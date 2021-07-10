@@ -1,5 +1,6 @@
-import { context } from "."
+import { context, shift } from "."
 import { Color } from "./color"
+import { K_DRAW, K_PAN } from "./config"
 import { get_mouse_pos } from "./helper"
 import { Transform } from "./transform"
 
@@ -12,6 +13,7 @@ export class Canvas {
 
     private pan_last: undefined | { x: number, y: number }
 
+
     constructor() {
         this.layers = [new CanvasLayer(this)]
         this.active_layer = this.layers[0]
@@ -20,18 +22,20 @@ export class Canvas {
         document.addEventListener("mousedown", (ev) => {
             const { x: rx, y: ry } = get_mouse_pos(ev)
             const { x, y } = this.transform.untransform(rx, ry)
-            if (ev.button == 1) this.pan_last = { x: rx, y: ry }
-            if (ev.button != 0) return
-            this.active_stroke = new Stroke()
-            this.active_layer.strokes.push(this.active_stroke)
-            this.active_stroke.add_point(x, y)
+            if (ev.button == K_PAN[0] && shift == K_PAN[1]) this.pan_last = { x: rx, y: ry }
+            if (ev.button == K_DRAW[0] && shift == K_DRAW[1]) {
+                this.active_stroke = new Stroke()
+                this.active_layer.strokes.push(this.active_stroke)
+                this.active_stroke.add_point(x, y)
+            }
         })
         document.addEventListener("mouseup", (ev) => {
-            if (ev.button == 1) this.pan_last = undefined
-            if (ev.button != 0) return
-            const { x: rx, y: ry } = get_mouse_pos(ev)
-            const { x, y } = this.transform.untransform(rx, ry)
-            this.active_stroke = undefined
+            if (ev.button == K_PAN[0] && shift == K_PAN[1]) this.pan_last = undefined
+            if (ev.button == K_DRAW[0] && shift == K_DRAW[1]) {
+                const { x: rx, y: ry } = get_mouse_pos(ev)
+                const { x, y } = this.transform.untransform(rx, ry)
+                this.active_stroke = undefined
+            }
         })
         document.addEventListener("mousemove", (ev) => {
             const { x: rx, y: ry } = get_mouse_pos(ev)
