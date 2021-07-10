@@ -15,6 +15,7 @@ export interface MouseMenuState {
 }
 export interface KeyboardMenuState {
     current_menu: MenuTree[]
+    path: string[]
 }
 
 export interface MenuTree {
@@ -28,7 +29,7 @@ var mstate_mouse: MouseMenuState | undefined
 var mstate_keyboard: KeyboardMenuState | undefined
 var mouse: { x: number, y: number, pressed: boolean } = { x: 0, y: 0, pressed: false }
 
-function default_keyboard_menu_state(): KeyboardMenuState { return { current_menu: menu_root() } }
+function default_keyboard_menu_state(): KeyboardMenuState { return { current_menu: menu_root(), path: ["root"] } }
 
 export function setup_menu() {
     mstate_keyboard = default_keyboard_menu_state()
@@ -61,6 +62,7 @@ export function setup_menu() {
                 ev.preventDefault()
                 if (!o.select) return mstate_keyboard = default_keyboard_menu_state()
                 const submenu = o.select()
+                mstate_keyboard.path.push(o.label)
                 if (submenu) mstate_keyboard.current_menu = submenu
                 else mstate_keyboard = default_keyboard_menu_state()
             }
@@ -81,6 +83,8 @@ export function draw_keyboard_menu() {
         context.fillText(o.label, 64, base)
         base += 24
     }
+    context.fillStyle = "#3477eb"
+    context.fillText(mstate_keyboard.path.join(" -> "), 0, base)
 }
 
 export function update_mouse_menu() {
