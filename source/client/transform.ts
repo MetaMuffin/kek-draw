@@ -1,3 +1,4 @@
+import { app_canvas, context } from "."
 
 
 export class Transform {
@@ -9,6 +10,19 @@ export class Transform {
     off_y: number = 0
 
     constructor() { }
+
+    untransform(x: number, y: number): { x: number, y: number } {
+        context.save()
+        context.transform(...app_canvas.transform.to_array())
+        var matrix = context.getTransform();
+        var imatrix = matrix.invertSelf();
+        context.restore()
+
+        return {
+            x: x * imatrix.a + y * imatrix.c + imatrix.e,
+            y: x * imatrix.b + y * imatrix.d + imatrix.f
+        }
+    }
 
     // for canvas.tranform(a,b,c,d,e,f)
     to_array(): [number, number, number, number, number, number] {

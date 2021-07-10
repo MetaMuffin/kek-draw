@@ -18,8 +18,9 @@ export class Canvas {
     }
     setup() {
         document.addEventListener("mousedown", (ev) => {
-            const { x, y } = get_mouse_pos(ev)
-            if (ev.button == 1) this.pan_last = { x, y }
+            const { x: rx, y: ry } = get_mouse_pos(ev)
+            const { x, y } = this.transform.untransform(rx, ry)
+            if (ev.button == 1) this.pan_last = { x: rx, y: ry }
             if (ev.button != 0) return
             this.active_stroke = new Stroke()
             this.active_layer.strokes.push(this.active_stroke)
@@ -28,19 +29,21 @@ export class Canvas {
         document.addEventListener("mouseup", (ev) => {
             if (ev.button == 1) this.pan_last = undefined
             if (ev.button != 0) return
-            const { x, y } = get_mouse_pos(ev)
+            const { x: rx, y: ry } = get_mouse_pos(ev)
+            const { x, y } = this.transform.untransform(rx, ry)
             this.active_stroke = undefined
         })
         document.addEventListener("mousemove", (ev) => {
-            const { x, y } = get_mouse_pos(ev)
+            const { x: rx, y: ry } = get_mouse_pos(ev)
+            const { x, y } = this.transform.untransform(rx, ry)
             if (this.active_stroke) {
                 this.active_stroke.add_point(x, y)
             }
             if (this.pan_last) {
-                const [dx, dy] = [x - this.pan_last.x, y - this.pan_last.y]
+                const [dx, dy] = [rx - this.pan_last.x, ry - this.pan_last.y]
                 this.transform.off_x += dx
                 this.transform.off_y += dy
-                this.pan_last = { x, y }
+                this.pan_last = { x: rx, y: ry }
             }
         })
     }
