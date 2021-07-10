@@ -1,34 +1,46 @@
 import { context } from "."
 import { Color } from "./color"
 import { get_mouse_pos } from "./helper"
+import { Transform } from "./transform"
 
 
 export class Canvas {
     layers: CanvasLayer[]
     active_layer: CanvasLayer
     active_stroke?: Stroke
+    transform: Transform = new Transform()
+
+    private pan_last: undefined | { x: number, y: number }
 
     constructor() {
-        this.layers = [new CanvasLayer()]
+        this.layers = [new CanvasLayer(this)]
         this.active_layer = this.layers[0]
     }
     setup() {
         document.addEventListener("mousedown", (ev) => {
-            if (ev.button != 0) return
             const { x, y } = get_mouse_pos(ev)
+            if (ev.button == 1) this.pan_last = { x, y }
+            if (ev.button != 0) return
             this.active_stroke = new Stroke()
             this.active_layer.strokes.push(this.active_stroke)
             this.active_stroke.add_point(x, y)
         })
         document.addEventListener("mouseup", (ev) => {
+            if (ev.button == 1) this.pan_last = undefined
             if (ev.button != 0) return
             const { x, y } = get_mouse_pos(ev)
             this.active_stroke = undefined
         })
         document.addEventListener("mousemove", (ev) => {
+            const { x, y } = get_mouse_pos(ev)
             if (this.active_stroke) {
-                const { x, y } = get_mouse_pos(ev)
                 this.active_stroke.add_point(x, y)
+            }
+            if (this.pan_last) {
+                const [dx, dy] = [x - this.pan_last.x, y - this.pan_last.y]
+                this.transform.off_x += dx
+                this.transform.off_y += dy
+                this.pan_last = { x, y }
             }
         })
     }
@@ -44,8 +56,13 @@ export class CanvasLayer {
     fill_color?: Color
     stroke_color?: Color = Color.WHITE()
     line_width: number = 3
+    canvas: Canvas
+
+    constructor(canvas: Canvas) { this.canvas = canvas }
 
     draw() {
+        context.save()
+        context.transform(...this.canvas.transform.to_array())
         context.lineWidth = this.line_width
         if (this.fill_color) context.fillStyle = this.fill_color.value
         if (this.stroke_color) context.strokeStyle = this.stroke_color.value
@@ -54,6 +71,7 @@ export class CanvasLayer {
         for (const s of this.strokes) {
             s.draw(do_stroke, do_fill)
         }
+        context.restore()
     }
 }
 
