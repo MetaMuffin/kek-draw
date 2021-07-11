@@ -46,7 +46,7 @@ function s_import(i: CanvasExport) {
         layer.priority = l.priority
         layer.line_width = l.line_width
         layer.strokes = l.strokes.map(s => {
-            const stroke = new Stroke()
+            const stroke = new Stroke(layer)
             stroke.points = s.points
             return stroke
         })
