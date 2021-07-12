@@ -5,10 +5,12 @@ import WebpackDevMiddleware from "webpack-dev-middleware"
 import { existsSync, readFile, readFileSync } from "fs";
 import http from "http"
 import https from "https"
-
+import expressWs from "express-ws";
+import { connect_client } from "./main";
 
 async function main() {
     const app = Express();
+    const app_ws = expressWs(app).app
 
     const webpackConfig = require('../../webpack.config');
     const compiler = Webpack(webpackConfig)
@@ -35,8 +37,12 @@ async function main() {
         res.send("This is an error page");
     });
 
+    app_ws.ws("/api",(ws,req) => {
+        connect_client(ws)
+    })
+
     const port = parseInt(process.env.PORT ?? "8080")
-    app.listen(port, "127.0.0.1", () => {
+    app_ws.listen(port, "127.0.0.1", () => {
         console.log(`Server listening on 127.0.0.1:${port}`);
     })
 }
