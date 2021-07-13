@@ -1,6 +1,7 @@
 import { Canvas } from "./canvas"
 import { Color } from "./color"
 import { draw_keyboard_menu, setup_menu, update_mouse_menu } from "./menu"
+import { ws_connect } from "./websocket"
 
 
 export var shift = false
@@ -11,7 +12,10 @@ export var context: CanvasRenderingContext2D
 export var config: { background: Color } = { background: Color.BLACK() }
 export const app_canvas = new Canvas()
 
-window.onload = () => {
+window.onload = async () => {
+    document.body.innerHTML = "<p>connecting websocket</p>"
+    await ws_connect()
+
     canvas = document.createElement("canvas")
     const s_context = canvas.getContext("2d")
     if (!s_context) throw new Error("sadfhasdjfkhl");

@@ -3,8 +3,8 @@
 
 export type Packet = CPacket | SPacket
 export type CSPacket = PacketUpdatePoint | PacketUpdateLayer | PacketRemoveLayer | PacketRemovePoint
-export type CPacket = CSPacket | PacketViewReq
-export type SPacket = CSPacket | PacketViewRes
+export type CPacket = CSPacket | PacketFetchLayer | PacketFetchPoint
+export type SPacket = CSPacket
 
 export interface PacketUpdatePoint {
     type: "update-point",
@@ -22,25 +22,26 @@ export interface PacketRemoveLayer {
     type: "remove-layer"
     id: ID
 }
-export interface PacketViewRes {
-    type: "view-response",
-    points: IPoint[]
-}
-export interface PacketViewReq {
-    type: "view-request"
+export interface PacketFetchPoint {
+    type: "fetch-point"
     rect: IRect
+}
+export interface PacketFetchLayer {
+    type: "fetch-layer",
+    id: ID
 }
 
 
 // Interfaces
 
-export type ID = string
+export type ID = number
 export interface IPoint {
     id: ID
     x: number
     y: number
     quad: ID
-    index: number
+    order: number
+    stroke: ID
     layer: ID
 }
 

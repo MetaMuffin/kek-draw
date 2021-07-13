@@ -1,8 +1,10 @@
 import { context, shift } from "."
+import { IPoint } from "../types"
 import { Color } from "./color"
 import { K_DRAW, K_PAN, MAX_POINT_DENSITY_PER_WEIGHT } from "./config"
 import { distance, get_mouse_pos } from "./helper"
 import { Transform } from "./transform"
+import { send_packet } from "./websocket"
 
 
 export class Canvas {
@@ -64,6 +66,7 @@ export class Canvas {
 }
 
 export class CanvasLayer {
+    id: number
     strokes: Stroke[] = []
     fill_color?: Color
     stroke_color?: Color = Color.WHITE()
@@ -72,7 +75,10 @@ export class CanvasLayer {
     priority: number = 0
     hidden: boolean = false
 
-    constructor(canvas: Canvas) { this.canvas = canvas }
+    constructor(canvas: Canvas) {
+        this.id = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)
+        this.canvas = canvas
+    }
 
     draw() {
         if (this.hidden) return
@@ -91,49 +97,62 @@ export class CanvasLayer {
 }
 
 export class Stroke {
-    points: [number, number][] = []
+    id: number
+    points: IPoint[] = []
     layer: CanvasLayer
     constructor(layer: CanvasLayer) {
+        this.id = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)
         this.layer = layer
     }
     draw(do_stroke: boolean, do_fill: boolean) {
-        if (this.points.length <= 1) this.draw_constant()
+        if (this.points.length == 0) this.draw_void()
+        else if (this.points.length <= 1) this.draw_constant()
         else if (this.points.length <= 2) this.draw_linear()
         else this.draw_quadratic()
         if (do_fill) context.fill()
         if (do_stroke) context.stroke()
         context.closePath()
     }
+    draw_void() { }
     draw_constant() {
         context.beginPath()
-        context.moveTo(this.points[0][0]-1, this.points[0][1]-1)
-        context.lineTo(this.points[0][0]+1, this.points[0][1]-1)
-        context.lineTo(this.points[0][0]+1, this.points[0][1]+1)
-        context.lineTo(this.points[0][0]-1, this.points[0][1]+1)
-        context.lineTo(this.points[0][0]-1, this.points[0][1]-1)
+        context.moveTo(this.points[0].x - 1, this.points[0].y - 1)
+        context.lineTo(this.points[0].x + 1, this.points[0].y - 1)
+        context.lineTo(this.points[0].x + 1, this.points[0].y + 1)
+        context.lineTo(this.points[0].x - 1, this.points[0].y + 1)
+        context.lineTo(this.points[0].x - 1, this.points[0].y - 1)
     }
     draw_linear() {
         context.beginPath()
-        context.moveTo(this.points[0][0], this.points[0][1]);
+        context.moveTo(this.points[0].x, this.points[0].y);
         for (const p of this.points) {
-            context.lineTo(...p)
+            context.lineTo(p.x, p.y)
         }
     }
     draw_quadratic() {
         context.beginPath()
-        context.moveTo(this.points[0][0], this.points[0][1]);
+        context.moveTo(this.points[0].x, this.points[0].y);
         var i = 0;
         for (i = 1; i < this.points.length - 2; i++) {
-            var xc = (this.points[i][0] + this.points[i + 1][0]) / 2;
-            var yc = (this.points[i][1] + this.points[i + 1][1]) / 2;
-            context.quadraticCurveTo(this.points[i][0], this.points[i][1], xc, yc);
+            var xc = (this.points[i].x + this.points[i + 1].x) / 2;
+            var yc = (this.points[i].y + this.points[i + 1].y) / 2;
+            context.quadraticCurveTo(this.points[i].x, this.points[i].y, xc, yc);
         }
-        context.quadraticCurveTo(this.points[i][0], this.points[i][1], this.points[i + 1][0], this.points[i + 1][1]);
+        context.quadraticCurveTo(this.points[i].x, this.points[i].y, this.points[i + 1].x, this.points[i + 1].y);
     }
     add_point(x: number, y: number) {
-        const [lx, ly] = this.points[this.points.length - 1] ?? [+Infinity, +Infinity]
+        const { x: lx, y: ly } = this.points[this.points.length - 1] ?? { x: +Infinity, y: +Infinity }
         if (distance(x, y, lx, ly) > MAX_POINT_DENSITY_PER_WEIGHT * this.layer.line_width) {
-            this.points.push([x, y])
+            const np = {
+                x, y,
+                id: 0,
+                order: this.points.length,
+                layer: this.layer.id,
+                quad: 0,
+                stroke: this.id
+            }
+            this.points.push(np)
+            send_packet({ type: "update-point", data: np })
         }
     }
 }

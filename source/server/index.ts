@@ -6,16 +6,19 @@ import { existsSync, readFile, readFileSync } from "fs";
 import http from "http"
 import https from "https"
 import expressWs from "express-ws";
-import { connect_client } from "./main";
+import { connect_client, database } from "./main";
+import { log, logger_init } from "./logger";
 
 async function main() {
+    logger_init()
+    log("info", "", "starting")
     const app = Express();
     const app_ws = expressWs(app).app
 
     const webpackConfig = require('../../webpack.config');
     const compiler = Webpack(webpackConfig)
     const devMiddleware = WebpackDevMiddleware(compiler, {
-        publicPath: webpackConfig.output.publicPath
+        publicPath: webpackConfig.output.publicPath,
     })
     app.use("/scripts", devMiddleware)
 
@@ -32,18 +35,21 @@ async function main() {
         res.sendFile(join(__dirname, "../../public/favicon.ico"));
     });
 
+    app_ws.ws("/api", (ws, req) => {
+        connect_client(ws)
+    })
+
     app.use((req, res, next) => {
         res.status(404);
         res.send("This is an error page");
     });
 
-    app_ws.ws("/api",(ws,req) => {
-        connect_client(ws)
-    })
+
+    await database.init()
 
     const port = parseInt(process.env.PORT ?? "8080")
     app_ws.listen(port, "127.0.0.1", () => {
-        console.log(`Server listening on 127.0.0.1:${port}`);
+        log("info", "http", `http bound to 127.0.0.1:${port}`);
     })
 }
 
