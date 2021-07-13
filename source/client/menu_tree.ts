@@ -4,6 +4,7 @@ import { CanvasLayer } from "./canvas";
 import { ColorHelper } from "../common/color";
 import { make_void, make_void_arg } from "./helper";
 import { MenuTree } from "./menu";
+import { send_packet } from "./websocket";
 
 
 export function menu_root(): MenuTree[] {
@@ -64,10 +65,10 @@ const m_layers_config = (): MenuTree[] => [
         keybind: "r"
     }, {
         label: "set render priority",
-        select: () => number_helper(make_void_arg(n => {
+        select: () => number_helper(n => {
             app_canvas.active_layer.style.priority = n
             app_canvas.layers.sort((a, b) => a.style.priority - b.style.priority)
-        })),
+        }),
         keybind: "p"
     }, {
         label: app_canvas.active_layer.hidden ? "show" : "hide",
@@ -83,23 +84,38 @@ const m_layers_config = (): MenuTree[] => [
 const m_this_layer_config = (): MenuTree[] => [
     {
         label: "stroke",
-        select: () => color_helper(make_void_arg((col) => app_canvas.active_layer.style.stroke_color = col)),
+        select: () => color_helper((col) => {
+            app_canvas.active_layer.style.stroke_color = col
+            app_canvas.active_layer.update()
+        }),
         keybind: "s"
     }, {
         label: "no stroke",
-        select: () => app_canvas.active_layer.style.stroke_color = undefined,
+        select: () => {
+            app_canvas.active_layer.style.stroke_color = undefined
+            app_canvas.active_layer.update()
+        },
         keybind: "S"
     }, {
         label: "fill",
-        select: () => color_helper(make_void_arg((col) => app_canvas.active_layer.style.fill_color = col)),
+        select: () => color_helper((col) => {
+            app_canvas.active_layer.style.fill_color = col
+            app_canvas.active_layer.update()
+        }),
         keybind: "f"
     }, {
         label: "no fill",
-        select: () => app_canvas.active_layer.style.fill_color = undefined,
+        select: () => {
+            app_canvas.active_layer.style.fill_color = undefined
+            app_canvas.active_layer.update()
+        },
         keybind: "F"
     }, {
         label: "stroke weight",
-        select: () => stroke_weight_helper(make_void_arg(w => app_canvas.active_layer.style.line_width = w)),
+        select: () => stroke_weight_helper(w => {
+            app_canvas.active_layer.style.line_width = w
+            app_canvas.active_layer.update()
+        }),
         keybind: "w"
     }
 ]

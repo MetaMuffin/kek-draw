@@ -6,7 +6,7 @@
 
 | Attribute | Type | Note        |
 | --------- | ---- | ----------- |
-| `id`      | id   | Primary key |
+| `not_id`  | id   | Primary key |
 | `x`       | f64  |             |
 | `y`       | f64  |             |
 | `quad`    | id   | Indexed     |
@@ -15,17 +15,16 @@
 
 ### layer
 
-| Attribute  | Type | Note |
-| ---------- | ---- | ---- |
-| `id`       | id   |      |
-| `priority` | int  |      |
-| `style`    | json |      |
+| Attribute | Type | Note |
+| --------- | ---- | ---- |
+| `not_id`  | id   |      |
+| `style`   | json |      |
 
 ### quad
 
 | Attribute | Type | Note                  |
 | --------- | ---- | --------------------- |
-| `id`      | id   | Primary key, root = 0 |
+| `not_id`  | id   | Primary key, root = 0 |
 | `tl`      | id?  |                       |
 | `tr`      | id?  |                       |
 | `bl`      | id?  |                       |

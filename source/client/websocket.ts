@@ -40,11 +40,9 @@ function fetch_layer(id: ID): Promise<ILayer | undefined> {
 }
 
 async function on_packet(packet: SPacket) {
-    console.log(packet);
+    // console.log(packet);
     packet_listeners.forEach(l => l(packet))
     if (packet.type == "update-point") {
-        console.log(1);
-
         let layer = app_canvas.layers.find(l => l.id == packet.data.layer)
         if (!layer) {
             layer = new CanvasLayer(app_canvas)
@@ -69,7 +67,18 @@ async function on_packet(packet: SPacket) {
             existing.stroke = packet.data.stroke
         } else {
             stroke.points.push(packet.data)
+            stroke.points.sort((a, b) => a.order - b.order)
         }
+    } else if (packet.type == "update-layer") {
+        let layer = app_canvas.layers.find(l => l.id == packet.data.id)
+        if (!layer) {
+            layer = new CanvasLayer(app_canvas)
+            layer.id = packet.data.id
+            app_canvas.layers.push(layer)
+        }
+        layer.style = packet.data.style
+    } else {
+        throw new Error("nobody wanted to implement this yet");
     }
 }
 

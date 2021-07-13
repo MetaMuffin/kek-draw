@@ -1,11 +1,10 @@
-import { context, shift } from "."
-import { DEFAULT_STYLE, ID, ILayerStyle, IPoint, NEW_ID } from "../common/types"
+import { canvas, context, shift } from "."
+import { DEFAULT_STYLE, ID, ILayer, ILayerStyle, IPoint, NEW_ID } from "../common/types"
 import { ColorHelper } from "../common/color"
 import { K_DRAW, K_PAN, MAX_POINT_DENSITY_PER_WEIGHT } from "./config"
 import { distance, get_mouse_pos } from "./helper"
 import { Transform } from "./transform"
 import { send_packet } from "./websocket"
-
 
 export class Canvas {
     layers: CanvasLayer[]
@@ -14,13 +13,15 @@ export class Canvas {
     transform: Transform = new Transform()
 
     private pan_last: undefined | { x: number, y: number }
-
+    private update_view_timeout?: any
 
     constructor() {
         this.layers = [new CanvasLayer(this)]
         this.active_layer = this.layers[0]
     }
+
     setup() {
+        this.request_view_update()
         document.addEventListener("mousedown", (ev) => {
             const { x: rx, y: ry } = get_mouse_pos(ev)
             const { x, y } = this.transform.untransform(rx, ry)
@@ -50,6 +51,7 @@ export class Canvas {
                 this.transform.off_x += dx
                 this.transform.off_y += dy
                 this.pan_last = { x: rx, y: ry }
+                this.request_view_update()
             }
         })
         document.addEventListener("wheel", (ev) => {
@@ -58,6 +60,25 @@ export class Canvas {
             this.transform.scale_x *= 1 - (signum * 0.1)
         })
     }
+    request_view_update() {
+        clearTimeout(this.update_view_timeout)
+        this.update_view_timeout = setTimeout(() => {
+            send_packet({
+                type: "fetch-point",
+                rect: {
+                    tl: {
+                        x: this.transform.off_x,
+                        y: this.transform.off_y
+                    },
+                    br: {
+                        x: this.transform.off_x + this.transform.scale_x * canvas.width,
+                        y: this.transform.off_y + this.transform.scale_y * canvas.height
+                    },
+                }
+            })
+        }, 100)
+    }
+
     update() {
         for (const l of this.layers) {
             l.draw()
@@ -75,6 +96,10 @@ export class CanvasLayer {
     constructor(canvas: Canvas) {
         this.id = NEW_ID()
         this.canvas = canvas
+    }
+
+    update() {
+        send_packet({ type: "update-layer", data: { id: this.id, style: this.style } })
     }
 
     draw() {
@@ -97,10 +122,12 @@ export class Stroke {
     id: number
     points: IPoint[] = []
     layer: CanvasLayer
+
     constructor(layer: CanvasLayer) {
         this.id = NEW_ID()
         this.layer = layer
     }
+
     draw(do_stroke: boolean, do_fill: boolean) {
         if (this.points.length == 0) this.draw_void()
         else if (this.points.length <= 1) this.draw_constant()

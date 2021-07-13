@@ -68,7 +68,10 @@ export class Client {
             broadcast(p)
             database.update_point(p.data)
         } else if (p.type == "fetch-point") {
-            this.log("warn", "fetch-point not implemented")
+            let points = await database.points_in_rect(p.rect)
+            for (const p of points) {
+                this.send_packet({ type: "update-point", data: p })
+            }
         } else if (p.type == "fetch-layer") {
             let l = await database.get_layer(p.id)
             if (!l) this.send_packet({ type: "log", message: "layer not found" })
