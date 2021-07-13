@@ -2,7 +2,7 @@
 // Packets
 
 export type Packet = CPacket | SPacket
-export type CSPacket = PacketUpdatePoint | PacketUpdateLayer | PacketRemoveLayer | PacketRemovePoint
+export type CSPacket = PacketUpdatePoint | PacketUpdateLayer | PacketRemoveLayer | PacketRemovePoint | PacketLog
 export type CPacket = CSPacket | PacketFetchLayer | PacketFetchPoint
 export type SPacket = CSPacket
 
@@ -30,11 +30,16 @@ export interface PacketFetchLayer {
     type: "fetch-layer",
     id: ID
 }
-
+export interface PacketLog {
+    type: "log",
+    message: string
+}
 
 // Interfaces
 
 export type ID = number
+export type Color = [number, number, number, number]
+
 export interface IPoint {
     id: ID
     x: number
@@ -47,17 +52,20 @@ export interface IPoint {
 
 export interface ILayer {
     id: ID,
-    priority: number
     style: ILayerStyle
 }
 
 export interface ILayerStyle {
     line_width: number
-    stroke_color?: [number, number, number]
-    fill_color?: [number, number, number]
+    stroke_color?: Color
+    fill_color?: Color
+    priority: number
 }
 
 export interface IRect {
     tl: { x: number, y: number },
     br: { x: number, y: number }
 }
+
+export function DEFAULT_STYLE(): ILayerStyle { return { line_width: 3, stroke_color: [0, 0, 255, 255], priority: 0 } }
+export function NEW_ID(): ID { return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER) }

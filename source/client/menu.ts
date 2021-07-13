@@ -1,5 +1,6 @@
 import { canvas, context, shift } from "."
-import { Color } from "./color"
+import { Color } from "../common/types"
+import { ColorHelper } from "../common/color"
 import { K_MENU } from "./config"
 import { dist } from "./helper"
 import { menu_root } from "./menu_tree"
@@ -107,7 +108,7 @@ export function update_mouse_menu() {
                     context.fillText(item.label, x, y)
                 }
                 if (pass == 0) {
-                    if (item.tint) context.fillStyle = item.tint.with_alpha(0.3).value
+                    if (item.tint) context.fillStyle = ColorHelper.to_string(item.tint)
                     else context.fillStyle = "rgba(255,255,255,0.2)"
 
                     context.strokeStyle = "black"

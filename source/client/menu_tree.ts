@@ -1,6 +1,7 @@
 import { app_canvas, config } from ".";
+import { Color } from "../common/types";
 import { CanvasLayer } from "./canvas";
-import { Color } from "./color";
+import { ColorHelper } from "../common/color";
 import { make_void, make_void_arg } from "./helper";
 import { MenuTree } from "./menu";
 
@@ -13,7 +14,7 @@ export function menu_root(): MenuTree[] {
         { label: "tool", keybind: "t" },
         {
             label: "extra", keybind: "e", select: (): MenuTree[] => [
-                { label: "rm last stroke of this layer", keybind: "u", select: make_void(() => app_canvas.active_layer.strokes.pop()) },
+
             ]
         }
     ]
@@ -22,7 +23,7 @@ export function menu_root(): MenuTree[] {
 function color_helper(select: (color: Color) => MenuTree[] | undefined | void): MenuTree[] {
     const colors: [string, string][] = [["red", "r"], ["orange", "o"], ["gr.-yel.", "y"], ["green", "g"], ["cyan", "c"], ["blue", "b"]]
     return colors.map(([label, keybind], i) => {
-        const col = new Color(i / colors.length)
+        const col = ColorHelper.hue(i / colors.length)
         return { label, keybind, select: () => select(col), tint: col }
     })
 }
@@ -64,8 +65,8 @@ const m_layers_config = (): MenuTree[] => [
     }, {
         label: "set render priority",
         select: () => number_helper(make_void_arg(n => {
-            app_canvas.active_layer.priority = n
-            app_canvas.layers.sort((a, b) => a.priority - b.priority)
+            app_canvas.active_layer.style.priority = n
+            app_canvas.layers.sort((a, b) => a.style.priority - b.style.priority)
         })),
         keybind: "p"
     }, {
@@ -82,23 +83,23 @@ const m_layers_config = (): MenuTree[] => [
 const m_this_layer_config = (): MenuTree[] => [
     {
         label: "stroke",
-        select: () => color_helper(make_void_arg((col) => app_canvas.active_layer.stroke_color = col)),
+        select: () => color_helper(make_void_arg((col) => app_canvas.active_layer.style.stroke_color = col)),
         keybind: "s"
     }, {
         label: "no stroke",
-        select: () => app_canvas.active_layer.stroke_color = undefined,
+        select: () => app_canvas.active_layer.style.stroke_color = undefined,
         keybind: "S"
     }, {
         label: "fill",
-        select: () => color_helper(make_void_arg((col) => app_canvas.active_layer.fill_color = col)),
+        select: () => color_helper(make_void_arg((col) => app_canvas.active_layer.style.fill_color = col)),
         keybind: "f"
     }, {
         label: "no fill",
-        select: () => app_canvas.active_layer.fill_color = undefined,
+        select: () => app_canvas.active_layer.style.fill_color = undefined,
         keybind: "F"
     }, {
         label: "stroke weight",
-        select: () => stroke_weight_helper(make_void_arg(w => app_canvas.active_layer.line_width = w)),
+        select: () => stroke_weight_helper(make_void_arg(w => app_canvas.active_layer.style.line_width = w)),
         keybind: "w"
     }
 ]
@@ -114,7 +115,7 @@ const m_global_config = (): MenuTree[] => [
             },
             {
                 label: "clear color",
-                select: make_void(() => config.background = Color.BLACK()),
+                select: make_void(() => config.background = ColorHelper.BLACK()),
                 keybind: "c"
             }
         ],

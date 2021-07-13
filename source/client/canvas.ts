@@ -1,6 +1,6 @@
 import { context, shift } from "."
-import { IPoint } from "../types"
-import { Color } from "./color"
+import { DEFAULT_STYLE, ID, ILayerStyle, IPoint, NEW_ID } from "../common/types"
+import { ColorHelper } from "../common/color"
 import { K_DRAW, K_PAN, MAX_POINT_DENSITY_PER_WEIGHT } from "./config"
 import { distance, get_mouse_pos } from "./helper"
 import { Transform } from "./transform"
@@ -27,7 +27,7 @@ export class Canvas {
             if (ev.button == K_PAN[0] && shift == K_PAN[1]) this.pan_last = { x: rx, y: ry }
             if (ev.button == K_DRAW[0] && shift == K_DRAW[1]) {
                 this.active_stroke = new Stroke(this.active_layer)
-                this.active_layer.strokes.push(this.active_stroke)
+                this.active_layer.strokes.set(this.active_stroke.id, this.active_stroke)
                 this.active_stroke.add_point(x, y)
             }
         })
@@ -67,16 +67,13 @@ export class Canvas {
 
 export class CanvasLayer {
     id: number
-    strokes: Stroke[] = []
-    fill_color?: Color
-    stroke_color?: Color = Color.WHITE()
-    line_width: number = 3
+    strokes: Map<ID, Stroke> = new Map()
+    style: ILayerStyle = DEFAULT_STYLE()
     canvas: Canvas
-    priority: number = 0
     hidden: boolean = false
 
     constructor(canvas: Canvas) {
-        this.id = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)
+        this.id = NEW_ID()
         this.canvas = canvas
     }
 
@@ -84,12 +81,12 @@ export class CanvasLayer {
         if (this.hidden) return
         context.save()
         context.transform(...this.canvas.transform.to_array())
-        context.lineWidth = this.line_width
-        if (this.fill_color) context.fillStyle = this.fill_color.value
-        if (this.stroke_color) context.strokeStyle = this.stroke_color.value
-        const do_fill = this.fill_color != undefined
-        const do_stroke = this.stroke_color != undefined
-        for (const s of this.strokes) {
+        context.lineWidth = this.style.line_width
+        if (this.style.fill_color) context.fillStyle = ColorHelper.to_string(this.style.fill_color)
+        if (this.style.stroke_color) context.strokeStyle = ColorHelper.to_string(this.style.stroke_color)
+        const do_fill = this.style.fill_color != undefined
+        const do_stroke = this.style.stroke_color != undefined
+        for (const [id, s] of this.strokes) {
             s.draw(do_stroke, do_fill)
         }
         context.restore()
@@ -101,7 +98,7 @@ export class Stroke {
     points: IPoint[] = []
     layer: CanvasLayer
     constructor(layer: CanvasLayer) {
-        this.id = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)
+        this.id = NEW_ID()
         this.layer = layer
     }
     draw(do_stroke: boolean, do_fill: boolean) {
@@ -142,10 +139,10 @@ export class Stroke {
     }
     add_point(x: number, y: number) {
         const { x: lx, y: ly } = this.points[this.points.length - 1] ?? { x: +Infinity, y: +Infinity }
-        if (distance(x, y, lx, ly) > MAX_POINT_DENSITY_PER_WEIGHT * this.layer.line_width) {
+        if (distance(x, y, lx, ly) > MAX_POINT_DENSITY_PER_WEIGHT * this.layer.style.line_width) {
             const np = {
                 x, y,
-                id: 0,
+                id: NEW_ID(),
                 order: this.points.length,
                 layer: this.layer.id,
                 quad: 0,

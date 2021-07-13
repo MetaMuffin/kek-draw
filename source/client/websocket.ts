@@ -1,6 +1,6 @@
 import { app_canvas } from "."
-import { CPacket, SPacket } from "../types"
-import { CanvasLayer } from "./canvas"
+import { CPacket, ID, ILayer, SPacket } from "../common/types"
+import { CanvasLayer, Stroke } from "./canvas"
 
 var ws: WebSocket
 export function ws_connect(): Promise<void> {
@@ -24,13 +24,51 @@ export function ws_connect(): Promise<void> {
     })
 }
 
+const packet_listeners: ((packet: SPacket) => void)[] = []
+
+function fetch_layer(id: ID): Promise<ILayer | undefined> {
+    return new Promise(res => {
+        send_packet({ type: "fetch-layer", id })
+        const fn = (p: SPacket) => {
+            if (p.type != "update-layer") return
+            if (p.data.id != id) return
+            res(p.data)
+            packet_listeners.splice(packet_listeners.findIndex(f => f == fn))
+        }
+        packet_listeners.push(fn)
+    })
+}
+
 async function on_packet(packet: SPacket) {
+    console.log(packet);
+    packet_listeners.forEach(l => l(packet))
     if (packet.type == "update-point") {
+        console.log(1);
+
         let layer = app_canvas.layers.find(l => l.id == packet.data.layer)
         if (!layer) {
             layer = new CanvasLayer(app_canvas)
             layer.id = packet.data.layer
-            
+            const layer_data = await fetch_layer(layer.id)
+            if (!layer_data) throw new Error("ashdajskdhf");
+            layer.style = layer_data.style
+            app_canvas.layers.push(layer)
+        }
+        let stroke = layer.strokes.get(packet.data.stroke)
+        if (!stroke) {
+            stroke = new Stroke(layer)
+            stroke.id = packet.data.stroke
+            layer.strokes.set(stroke.id, stroke)
+        }
+        const existing = stroke.points.find(p => p.id == packet.data.id)
+        if (existing) {
+            existing.x = packet.data.x
+            existing.y = packet.data.y
+            existing.layer = packet.data.layer
+            existing.quad = packet.data.quad
+            existing.stroke = packet.data.stroke
+        } else {
+            stroke.points.push(packet.data)
         }
     }
 }

@@ -1,5 +1,6 @@
+import { Color } from "../common/types"
 import { Canvas } from "./canvas"
-import { Color } from "./color"
+import { ColorHelper } from "../common/color"
 import { draw_keyboard_menu, setup_menu, update_mouse_menu } from "./menu"
 import { ws_connect } from "./websocket"
 
@@ -9,7 +10,7 @@ export var shift = false
 export var canvas: HTMLCanvasElement
 export var context: CanvasRenderingContext2D
 
-export var config: { background: Color } = { background: Color.BLACK() }
+export var config: { background: Color } = { background: ColorHelper.BLACK() }
 export const app_canvas = new Canvas()
 
 window.onload = async () => {
@@ -46,7 +47,7 @@ window.onload = async () => {
 }
 
 function redraw() {
-    context.fillStyle = config.background.value
+    context.fillStyle = ColorHelper.to_string(config.background)
     context.fillRect(0, 0, canvas.width, canvas.height)
 
     app_canvas.update()

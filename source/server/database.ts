@@ -1,5 +1,5 @@
 import { Database } from "sqlite3"
-import { ID, ILayer, IPoint, IRect } from "../types";
+import { DEFAULT_STYLE, ID, ILayer, IPoint, IRect } from "../common/types";
 import { log } from "./logger";
 
 
@@ -33,23 +33,24 @@ export class DatabaseBackend {
         });
     }
 
-    points_in_rect(rect: IRect): IPoint[] {
+    async points_in_rect(rect: IRect): Promise<IPoint[]> {
         throw new Error("unimplemented");
     }
-    get_layer(id: ID): ILayer | undefined {
-        throw new Error("unimplemented");
+    async get_layer(id: ID): Promise<ILayer | undefined> {
+        log("warn", "database", "get_layer not implemented")
+        return { id, style: DEFAULT_STYLE() }
     }
-    update_layer(l: ILayer) {
+    async update_layer(l: ILayer) {
         log("warn", "database", "update_layer not implemented")
     }
-    delete_layer(id: ID) {
-        log("warn", "database", "delete_layer not implemented")
+    async remove_layer(id: ID) {
+        log("warn", "database", "remove_layer not implemented")
     }
-    update_point(p: IPoint) {
+    async update_point(p: IPoint) {
         log("warn", "database", "update_point not implemented")
     }
-    delete_point(id: ID) {
-        log("warn", "database", "delete_point not implemented")
+    async remove_point(id: ID) {
+        log("warn", "database", "remove_point not implemented")
     }
 
 
