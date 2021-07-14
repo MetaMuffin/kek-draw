@@ -39,11 +39,18 @@ async function main() {
         connect_client(ws)
     })
 
+    app.get("/close", (req, res) => {
+        res.send("ok kek")
+        database.db.close() // TODO this is evil
+        setTimeout(() => { // TODO this aswell
+            process.exit(0)
+        }, 500) // TODO maybe dont use a timeout here
+    })
+
     app.use((req, res, next) => {
         res.status(404);
         res.send("This is an error page");
     });
-
 
     await database.init()
 

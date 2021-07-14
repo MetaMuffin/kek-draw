@@ -47,9 +47,11 @@ async function on_packet(packet: SPacket) {
         if (!layer) {
             layer = new CanvasLayer(app_canvas)
             layer.id = packet.data.layer
-            const layer_data = await fetch_layer(layer.id)
-            if (!layer_data) throw new Error("ashdajskdhf");
-            layer.style = layer_data.style
+            fetch_layer(layer.id).then(d => {
+                if (!d) throw new Error("ashdajskdhf");
+                if (!layer) throw new Error("wut?");
+                layer.style = d.style
+            })
             app_canvas.layers.push(layer)
         }
         let stroke = layer.strokes.get(packet.data.stroke)

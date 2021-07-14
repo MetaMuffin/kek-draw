@@ -29,10 +29,10 @@ window.onload = async () => {
     canvas.style.height = "100vh"
 
     document.addEventListener("keydown", ev => {
-        if (ev.code == "ShiftLeft") shift = true
+        if (ev.code == "ShiftLeft" || ev.code == "Space") shift = true
     })
     document.addEventListener("keyup", ev => {
-        if (ev.code == "ShiftLeft") shift = false
+        if (ev.code == "ShiftLeft" || ev.code == "Space") shift = false
     })
 
     function resize() {

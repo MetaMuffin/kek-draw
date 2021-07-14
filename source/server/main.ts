@@ -74,7 +74,10 @@ export class Client {
             }
         } else if (p.type == "fetch-layer") {
             let l = await database.get_layer(p.id)
-            if (!l) this.send_packet({ type: "log", message: "layer not found" })
+            if (!l) {
+                this.log("warn", "layer not found", p.id)
+                this.send_packet({ type: "log", message: "layer not found" })
+            }
             else this.send_packet({ type: "update-layer", data: l })
         } else { console.log("Some invalid packet type..."); }
     }

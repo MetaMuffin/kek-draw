@@ -1,14 +1,14 @@
 import { canvas, context, shift } from "."
-import { DEFAULT_STYLE, ID, ILayer, ILayerStyle, IPoint, NEW_ID } from "../common/types"
+import { DEFAULT_STYLE, ID, ILayer, ILayerStyle, IPoint, IRect, NEW_ID } from "../common/types"
 import { ColorHelper } from "../common/color"
 import { K_DRAW, K_PAN, MAX_POINT_DENSITY_PER_WEIGHT } from "./config"
-import { distance, get_mouse_pos } from "./helper"
+import { distance, get_mouse_pos, rect_includes_point } from "./helper"
 import { Transform } from "./transform"
 import { send_packet } from "./websocket"
 
 export class Canvas {
     layers: CanvasLayer[]
-    active_layer: CanvasLayer
+    active_layer?: CanvasLayer
     active_stroke?: Stroke
     transform: Transform = new Transform()
 
@@ -17,16 +17,18 @@ export class Canvas {
 
     constructor() {
         this.layers = [new CanvasLayer(this)]
+        this.layers[0].id = 0
         this.active_layer = this.layers[0]
     }
 
     setup() {
-        this.request_view_update()
+        this.update_view()
         document.addEventListener("mousedown", (ev) => {
             const { x: rx, y: ry } = get_mouse_pos(ev)
-            const { x, y } = this.transform.untransform(rx, ry)
+            const { x, y } = this.transform.untransform({ x: rx, y: ry })
             if (ev.button == K_PAN[0] && shift == K_PAN[1]) this.pan_last = { x: rx, y: ry }
             if (ev.button == K_DRAW[0] && shift == K_DRAW[1]) {
+                if (!this.active_layer) return
                 this.active_stroke = new Stroke(this.active_layer)
                 this.active_layer.strokes.set(this.active_stroke.id, this.active_stroke)
                 this.active_stroke.add_point(x, y)
@@ -36,13 +38,13 @@ export class Canvas {
             if (ev.button == K_PAN[0] && shift == K_PAN[1]) this.pan_last = undefined
             if (ev.button == K_DRAW[0] && shift == K_DRAW[1]) {
                 const { x: rx, y: ry } = get_mouse_pos(ev)
-                const { x, y } = this.transform.untransform(rx, ry)
+                const { x, y } = this.transform.untransform({ x: rx, y: ry })
                 this.active_stroke = undefined
             }
         })
         document.addEventListener("mousemove", (ev) => {
             const { x: rx, y: ry } = get_mouse_pos(ev)
-            const { x, y } = this.transform.untransform(rx, ry)
+            const { x, y } = this.transform.untransform({ x: rx, y: ry })
             if (this.active_stroke) {
                 this.active_stroke.add_point(x, y)
             }
@@ -51,7 +53,7 @@ export class Canvas {
                 this.transform.off_x += dx
                 this.transform.off_y += dy
                 this.pan_last = { x: rx, y: ry }
-                this.request_view_update()
+                this.update_view()
             }
         })
         document.addEventListener("wheel", (ev) => {
@@ -60,23 +62,28 @@ export class Canvas {
             this.transform.scale_x *= 1 - (signum * 0.1)
         })
     }
-    request_view_update() {
-        clearTimeout(this.update_view_timeout)
-        this.update_view_timeout = setTimeout(() => {
-            send_packet({
-                type: "fetch-point",
-                rect: {
-                    tl: {
-                        x: this.transform.off_x,
-                        y: this.transform.off_y
-                    },
-                    br: {
-                        x: this.transform.off_x + this.transform.scale_x * canvas.width,
-                        y: this.transform.off_y + this.transform.scale_y * canvas.height
-                    },
+    update_view() {
+        const view_rect: IRect = {
+            tl: this.transform.untransform({ x: 0, y: 0 }),
+            br: this.transform.untransform({ x: canvas.width, y: canvas.height }),
+        }
+        if (!this.update_view_timeout) {
+            this.update_view_timeout = setTimeout(() => {
+                clearTimeout(this.update_view_timeout)
+                this.update_view_timeout = undefined
+                send_packet({
+                    type: "fetch-point",
+                    rect: view_rect
+                })
+                for (const l of this.layers) {
+                    for (const [s_id, s] of l.strokes) {
+                        s.points = s.points.filter(p =>
+                            rect_includes_point(view_rect, p)
+                        )
+                    }
                 }
-            })
-        }, 100)
+            }, 100)
+        }
     }
 
     update() {

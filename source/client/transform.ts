@@ -1,4 +1,5 @@
 import { app_canvas, context } from "."
+import { IPoint } from "../common/types"
 
 
 export class Transform {
@@ -11,7 +12,7 @@ export class Transform {
 
     constructor() { }
 
-    untransform(x: number, y: number): { x: number, y: number } {
+    untransform(p: { x: number, y: number }): { x: number, y: number } {
         context.save()
         context.transform(...app_canvas.transform.to_array())
         var matrix = context.getTransform();
@@ -19,9 +20,16 @@ export class Transform {
         context.restore()
 
         return {
-            x: x * imatrix.a + y * imatrix.c + imatrix.e,
-            y: x * imatrix.b + y * imatrix.d + imatrix.f
+            x: p.x * imatrix.a + p.y * imatrix.c + imatrix.e,
+            y: p.x * imatrix.b + p.y * imatrix.d + imatrix.f
         }
+    }
+    transform(p: { x: number, y: number }): { x: number, y: number } {
+        return {
+            x: p.x * this.scale_x + p.y * this.skew_x + this.off_x,
+            y: p.x * this.scale_y + p.y * this.skew_y + this.off_y
+        }
+
     }
 
     // for canvas.tranform(a,b,c,d,e,f)

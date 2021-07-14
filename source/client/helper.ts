@@ -1,4 +1,5 @@
 import { canvas } from ".";
+import { IPoint, IRect } from "../common/types";
 
 
 export function dist(x1: number, y1: number, x2: number, y2: number): number {
@@ -13,7 +14,9 @@ export function get_mouse_pos(ev: MouseEvent): { x: number, y: number } {
     }
 }
 
-
+export function rect_includes_point(rect: IRect, point: IPoint): boolean {
+    return point.x > rect.tl.x && point.x < rect.br.x && point.y > rect.tl.y && point.y < rect.br.y
+}
 
 export function make_void_arg<T>(fn: (arg: T) => any): (arg: T) => void {
     return (arg) => {

@@ -66,13 +66,17 @@ const m_layers_config = (): MenuTree[] => [
     }, {
         label: "set render priority",
         select: () => number_helper(n => {
+            if (!app_canvas.active_layer) return
             app_canvas.active_layer.style.priority = n
             app_canvas.layers.sort((a, b) => a.style.priority - b.style.priority)
         }),
         keybind: "p"
     }, {
-        label: app_canvas.active_layer.hidden ? "show" : "hide",
-        select: make_void(() => app_canvas.active_layer.hidden = !app_canvas.active_layer.hidden),
+        label: app_canvas.active_layer?.hidden ? "show" : "hide",
+        select: make_void(() => {
+            if (!app_canvas.active_layer) return
+            app_canvas.active_layer.hidden = !app_canvas.active_layer.hidden
+        }),
         keybind: "h"
     }, {
         label: "select",
@@ -85,6 +89,7 @@ const m_this_layer_config = (): MenuTree[] => [
     {
         label: "stroke",
         select: () => color_helper((col) => {
+            if (!app_canvas.active_layer) return
             app_canvas.active_layer.style.stroke_color = col
             app_canvas.active_layer.update()
         }),
@@ -92,6 +97,7 @@ const m_this_layer_config = (): MenuTree[] => [
     }, {
         label: "no stroke",
         select: () => {
+            if (!app_canvas.active_layer) return
             app_canvas.active_layer.style.stroke_color = undefined
             app_canvas.active_layer.update()
         },
@@ -99,6 +105,7 @@ const m_this_layer_config = (): MenuTree[] => [
     }, {
         label: "fill",
         select: () => color_helper((col) => {
+            if (!app_canvas.active_layer) return
             app_canvas.active_layer.style.fill_color = col
             app_canvas.active_layer.update()
         }),
@@ -106,6 +113,7 @@ const m_this_layer_config = (): MenuTree[] => [
     }, {
         label: "no fill",
         select: () => {
+            if (!app_canvas.active_layer) return
             app_canvas.active_layer.style.fill_color = undefined
             app_canvas.active_layer.update()
         },
@@ -113,6 +121,7 @@ const m_this_layer_config = (): MenuTree[] => [
     }, {
         label: "stroke weight",
         select: () => stroke_weight_helper(w => {
+            if (!app_canvas.active_layer) return
             app_canvas.active_layer.style.line_width = w
             app_canvas.active_layer.update()
         }),
